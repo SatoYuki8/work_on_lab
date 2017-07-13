@@ -1,0 +1,32 @@
+/*16bit floating adder*/
+/*************************************
+  Half-precision floating-point format
+    _______________________________
+   | | | | | | | | | | | | | | | | |  (16 bit)
+   |5|4|3|2|1|a|9|8|7|6|5|4|3|2|1|0|  
+   |_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|_|
+    | |_______| |_________________|
+    |   exponent      fraction(10bit: precision=11bit)
+  sign  (5bit)  
+ (1bit)
+
+**************************************/
+
+
+
+module add_half{
+    input a<16>, b<16>;
+    output sum<16>;
+    instrin do;
+    
+    sel_v sign_a<1>, sign_b<1>;
+    sel_v exp_a<5>, exp_b<5>;
+    sel_v frac_a<10>, frac_b<10>;
+
+    comp5 comp5;
+
+    instruct do par{
+	exp_a = a<14:10>;
+	exp_b = b<14:10>;
+    }
+}

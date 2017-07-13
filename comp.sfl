@@ -1,0 +1,27 @@
+/* 1bit A > B */
+/* 1bit A < B */
+/* 1bit A = B */
+
+declare comp{
+    input a, b;
+    output l;     /*a > b*/
+    output s;     /*a < b*/
+    output eq;    /*a = b*/
+    instrin do;
+    
+    instr_arg do(a,b);
+}
+
+module comp{
+    input a, b;
+    output l;
+    output s;
+    output eq;
+    instrin do;
+    
+    instruct do par{
+	l = a&(^b);
+	eq = /|(^(a@b));
+	s = (^a)&b;
+    }
+}
