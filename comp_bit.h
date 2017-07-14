@@ -2,7 +2,7 @@
 /* 1bit A < B */
 /* 1bit A = B */
 
-declare comp{
+declare comp_bit{
     input a, b;
     output l;     /*a > b*/
     output s;     /*a < b*/
@@ -10,18 +10,4 @@ declare comp{
     instrin do;
     
     instr_arg do(a,b);
-}
-
-module comp{
-    input a, b;
-    output l;
-    output s;
-    output eq;
-    instrin do;
-    
-    instruct do par{
-	l = a&(^b);
-	eq = /|(^(a@b));
-	s = (^a)&b;
-    }
 }

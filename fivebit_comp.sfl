@@ -1,0 +1,40 @@
+/*******************/
+/* if (a > b) l=1; */
+/* else l=0;       */
+/*******************/
+
+%i "comp_bit.h"
+
+module fivebit_comp{
+    input a<5>;
+    input b<5>;
+    output l;
+    instrin do;
+
+    comp_bit comp1, comp2, comp3, comp4, comp5;
+
+    instruct do par{
+	alt {
+	    (comp1.do(a<4>, b<4>).l): l=0b1;
+	    (comp1.do(a<4>, b<4>).s): l=0b0;
+	    (comp1.do(a<4>, b<4>).eq): alt {
+		(comp2.do(a<3>, b<3>).l): l=0b1;
+		(comp2.do(a<3>, b<3>).s): l=0b0;
+		(comp2.do(a<3>, b<3>).eq): alt {
+		    (comp3.do(a<2>, b<2>).l): l=0b1;
+		    (comp3.do(a<2>, b<2>).s): l=0b0;
+		    (comp3.do(a<2>, b<2>).eq): alt {
+			(comp4.do(a<1>, b<1>).l): l=0b1;
+			(comp4.do(a<1>, b<1>).s): l=0b0;
+			(comp4.do(a<1>, b<1>).eq): alt {
+			    (comp5.do(a<0>, b<0>).l): l=0b1;
+			    (comp5.do(a<0>, b<0>).s): l=0b0;
+			    else: l=0b0;
+			}
+		    }
+		}
+	    }
+	}
+
+    }
+}
