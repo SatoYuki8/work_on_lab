@@ -12,7 +12,11 @@
 
 **************************************/
 
-
+%i "comp_bit.h"
+%i "fivebit_comp.h"
+%i "sub_shift.h"
+%i "add_or_sub.h"
+%i "exp_inc_right_shift.h"
 
 module add_half{
     input a<16>, b<16>;
@@ -21,12 +25,71 @@ module add_half{
     
     sel_v sign_a<1>, sign_b<1>;
     sel_v exp_a<5>, exp_b<5>;
-    sel_v frac_a<10>, frac_b<10>;
+ /* sel_v frac_a<10>, frac_b<10>; */
+    sel_v frac_a<13>, frac_b<13>;  /* hidden || frac || guard || round  */
+    sel_v sticky;                 /* sticky bit */
 
-    comp5 comp5;
+    sel_v res_exp<5>;             /* result exp */
+    sel_v res_frac<13>;           /* result frac */
+
+    fivebit_comp comp;             /* comparison module */
+    sub_shift sub_shift;           /* exp sub and right shift module */
+    add_or_sub aors;               /* frac addition or subtraction module */
+    exp_inc_right_shift exsh;      /* exp plus 1 and frac shifted right module */
 
     instruct do par{
-	exp_a = a<14:10>;
-	exp_b = b<14:10>;
+	/* exp compare and op switch */
+	alt {
+	    (comp.do(exp_b, exp_a).l): par{    /* (exp_a < exp_b) -> switch */	
+		sign_a = b<15>;
+		sign_b = a<15>;
+		
+		exp_a = b<14:10>;
+		exp_b = a<14:10>;
+		
+		frac_a = 0b1 || b<9:0> || 0b00;
+		frac_b = 0b1 || a<9:0> || 0b00;
+	    } 
+	    else: par{                        /* (exp_a > exp_b) -> not switch */
+		sign_a = a<15>;
+		sign_b = b<15>;
+		
+		exp_a = a<14:10>;
+		exp_b = b<14:10>;
+		
+		frac_a = 0b1 || a<9:0> || 0b00;
+		frac_b = 0b1 || b<9:0> || 0b00;		
+	    }	    
+	}
+	
+
+	/* get diff of exp and right shift frac */
+	frac_b = sub_shift.do(exp_a, exp_b, frac_b).shifted_frac_b;
+	sticky = sub_shift.do(exp_a, exp_b, frac_b).sticky;   /* sticky bit */
+	
+	/* check sign bit and choice add or sub */
+	alt{
+	    (^(sign_a@sign_b)): par{ /* when sign A and B are equal, add */
+		alt{
+		    (aors.add(frac_a, frac_b).cout): par{  /* when exist carry */
+			res_frac = aors.add(frac_a, frac_b).result;
+			res_exp = exsh.do(exp_a, res_frac).inc_exp;
+			res_frac = exsh.do(exp_a, res_frac).shifted_frac; 
+		    }		    
+		    else: par{
+			res_frac = aors.add(frac_a, frac_b).result;
+			res_exp = exp_a;
+		    }
+		}
+	    }
+	    else: par{/* when sign is not equal, sub */
+		    res_frac = aors.sub(frac_a, frac_b).result; 
+		    /* left shift process... */
+		}
+	}
+	
+	sum = sign_a || res_exp || res_frac<11:2>;
+
     }
+
 }

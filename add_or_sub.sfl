@@ -1,0 +1,20 @@
+
+
+circuit add_or_sub{
+    input a<13>;
+    input b<13>;
+    output result<13>;
+    output cout;
+    instrin add;
+    instrin sub;
+
+    instruct add par{
+	result = a + b;
+	cout = (a<12>&b<12>) | ^(((a<12>&0b1)@(b<12>&0b1))&result<12>);
+    }
+    
+    instruct sub par{
+	result = a + (^b + 0b1);
+	cout = 0b0;
+    }
+}

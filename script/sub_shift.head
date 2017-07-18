@@ -1,0 +1,16 @@
+
+
+sflread sub_shift.sfl
+
+autoinstall sub_shift
+
+speak sub_shift.result
+
+set do 1; hold do;
+rpt_add A "%8t %b %b %b %b %b\n" exp_a exp_b frac_b shifted_frac_b sticky
+set exp_a 00000; set exp_b 00000;
+set frac_b 0000000000000;
+hold exp_a; hold exp_b; hold frac_b;
+
+#
+

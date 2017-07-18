@@ -1,0 +1,10 @@
+circuit tmp{
+    input a<2>;
+    input b<2>;
+    output c<2>;
+    instrin do;
+
+    instruct do par{
+	c = a+b;
+    }
+}

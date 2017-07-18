@@ -1,4 +1,5 @@
 all:
 
 distclean:
-	rm -rf *~ *result
+	rm -rf *~ *result *.v
+	rm -rf script/*scr script/*~
