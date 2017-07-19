@@ -42,7 +42,7 @@ module add_half{
     instruct do par{
 	/* exp compare and op switch */
 	alt {
-	    (comp.do(exp_b, exp_a).l): par{    /* (exp_a < exp_b) -> switch */	
+	    (comp.do(exp_b, exp_a).l == 0b1): par{    /* (exp_a < exp_b) -> switch */	
 		sign_a = b<15>;
 		sign_b = a<15>;
 		
@@ -71,9 +71,9 @@ module add_half{
 	
 	/* check sign bit and choice add or sub */
 	alt{
-	    (^(sign_a@sign_b)): par{ /* when sign A and B are equal, add */
+	    (^(sign_a@sign_b) == 0b1): par{ /* when sign A and B are equal, add */
 		alt{
-		    (aors.add(frac_a, frac_b).cout): par{  /* when exist carry */
+		    (aors.add(frac_a, frac_b).cout == 0b1): par{  /* when exist carry */
 			frac_tmp = aors.result;
 			res_exp = exsh.do(exp_a, frac_tmp).inc_exp;
 			res_frac = exsh.shifted_frac; 
