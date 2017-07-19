@@ -29,6 +29,8 @@ module add_half{
     sel_v frac_a<13>, frac_b<13>;  /* hidden || frac || guard || round  */
     sel_v sticky;                 /* sticky bit */
 
+    sel_v frac_tmp<13>;
+
     sel_v res_exp<5>;             /* result exp */
     sel_v res_frac<13>;           /* result frac */
 
@@ -65,19 +67,19 @@ module add_half{
 
 	/* get diff of exp and right shift frac */
 	frac_b = sub_shift.do(exp_a, exp_b, frac_b).shifted_frac_b;
-	sticky = sub_shift.do(exp_a, exp_b, frac_b).sticky;   /* sticky bit */
+	sticky = sub_shift.sticky;   /* sticky bit */
 	
 	/* check sign bit and choice add or sub */
 	alt{
 	    (^(sign_a@sign_b)): par{ /* when sign A and B are equal, add */
 		alt{
 		    (aors.add(frac_a, frac_b).cout): par{  /* when exist carry */
-			res_frac = aors.add(frac_a, frac_b).result;
-			res_exp = exsh.do(exp_a, res_frac).inc_exp;
-			res_frac = exsh.do(exp_a, res_frac).shifted_frac; 
+			frac_tmp = aors.result;
+			res_exp = exsh.do(exp_a, frac_tmp).inc_exp;
+			res_frac = exsh.shifted_frac; 
 		    }		    
 		    else: par{
-			res_frac = aors.add(frac_a, frac_b).result;
+			res_frac = aors.result;
 			res_exp = exp_a;
 		    }
 		}
