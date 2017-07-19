@@ -1,0 +1,19 @@
+#
+#	exp_inc_right_shift
+#
+
+sflread exp_inc_right_shift.sfl
+
+autoinstall exp_inc_right_shift
+
+speak	   exp_inc_right_shift.result
+
+set do 1; hold do;
+rpt_add A "%6t %b %b %b %b\n" exp frac inc_exp shifted_frac
+
+set exp 00000; set frac 0000000000000;
+hold exp; hold frac;
+forward +1
+
+#	以下自動生成スクリプト
+

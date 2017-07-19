@@ -31,6 +31,16 @@ add_or_sub.tmp:	add_or_sub.rb
 
 
 
+eirs:	exp_inc_right_shift.scr
+	rm -rf exp_inc_right_shift.tmp
+
+exp_inc_right_shift.scr:	exp_inc_right_shift.tmp exp_inc_right_shift.head
+	cat exp_inc_right_shift.head exp_inc_right_shift.tmp > $@
+
+exp_inc_right_shift.tmp:	exp_inc_right_shift.rb
+	ruby $< gensec > $@
+
+
 
 
 
