@@ -19,5 +19,22 @@ sub_shift.scr:	sub_shift.tmp sub_shift.head
 sub_shift.tmp:	sub_shift.rb
 	ruby $< gensec > $@
 
+
+aors:	add_or_sub.scr
+	rm -rf add_or_sub.tmp
+
+add_or_sub.scr:	add_or_sub.tmp add_or_sub.head
+	cat add_or_sub.head add_or_sub.tmp > $@
+
+add_or_sub.tmp:	add_or_sub.rb
+	ruby $< gensec > $@
+
+
+
+
+
+
+
+
 distclean:
 	rm -rf *~ *scr

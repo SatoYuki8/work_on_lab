@@ -8,9 +8,16 @@ circuit add_or_sub{
     instrin add;
     instrin sub;
 
+    sel_v tmp_a<14>;
+    sel_v tmp_b<14>;
+    sel_v tmp_res<14>;
+
     instruct add par{
-	result = a + b;
-	cout = (a<12>&b<12>) | ^(((a<12>&0b1)@(b<12>&0b1))&result<12>);
+	tmp_a = 0b0 || a;
+	tmp_b = 0b0 || b;
+	tmp_res = tmp_a + tmp_b;
+	result = tmp_res<12:0>;
+	cout = tmp_res<13>;
     }
     
     instruct sub par{

@@ -1,0 +1,19 @@
+#
+#	add_or_sub
+#
+
+sflread add_or_sub.sfl
+
+autoinstall add_or_sub
+
+speak add_or_sub.result
+
+set add 1; hold add;
+rpt_add A "%16t %b %b %b %b\n" a b result cout
+
+set a 0000000000000; set b 0000000000000;
+hold a; hold b;
+forward +1
+
+#	以下スクリプト
+
