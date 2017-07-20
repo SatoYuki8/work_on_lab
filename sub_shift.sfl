@@ -16,8 +16,16 @@ circuit sub_shift{
 
     instruct do par{
 	exp_sub = exp_a + (^exp_b + 0b00001);
-	shifted_frac_b = frac_b >> exp_sub;
-	tmp_shift = (frac_b || 0x000000000) >> exp_sub;
-	sticky = /|(tmp_shift<35:0>);
+	alt {
+	    (exp_sub == 0b00000): par{
+		shifted_frac_b = frac_b;
+		sticky = 0b0;
+	    }
+	    else: par{
+		shifted_frac_b = frac_b >> exp_sub;
+		tmp_shift = (frac_b || 0x000000000) >> exp_sub;
+		sticky = /|(tmp_shift<35:0>);
+	    }
+	}
     }
 }
