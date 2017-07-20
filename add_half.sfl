@@ -89,15 +89,19 @@ module add_half{
 		    }
 		}
 	    }
-	    else: par{/* when sign is not equal, sub */
+	    else: par{ /* when sign is not equal, sub */
 		    res_frac = aors.sub(frac_a, shifted_frac_b).result;     /*tmp*/
 		    res_exp = exp_a;                                /*tmp*/  
 		    /* left shift process... */
 		}
 	}
 	
-	sum = sign_a || res_exp || res_frac<11:2>;
-
+	/* when exp is 0b00000 and frac 0b00...0 */
+	alt {
+	    ((a<14:10> == 0b00000) & (a<9:0> == 0b0000000000)): sum = b;
+	    ((b<14:10> == 0b00000) & (b<9:0> == 0b0000000000)): sum = a;
+	    else: sum = sign_a || res_exp || res_frac<11:2>;
+	}
     }
 
 }

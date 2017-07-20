@@ -1,9 +1,13 @@
 all:	
 
-add_half:	add_half.head add_half.rb
-	ruby add_half.rb gensec > add_half.tmp
-	cat add_half.head add_half.tmp > add_half.scr
-	rm -rf *.tmp
+half:	add_half_add.scr
+	rm -rf add_half_add.tmp
+
+add_half_add.scr:	add_half_add.tmp add_half.head
+	cat add_half.head add_half_add.tmp > $@
+
+add_half_add.tmp:	add_half_add.rb
+	ruby $< gensec > $@
 
 comp:	
 	ruby fivebit_comp.rb gensec > tmp
