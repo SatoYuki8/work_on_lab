@@ -17,6 +17,7 @@
 %i "sub_shift.h"
 %i "add_or_sub.h"
 %i "exp_inc_right_shift.h"
+%i "read_zero_and_shift.h"
 
 module add_half{
     input a<16>, b<16>;
@@ -39,6 +40,7 @@ module add_half{
     sub_shift sub_shift;           /* exp sub and right shift module */
     add_or_sub aors;               /* frac addition or subtraction module */
     exp_inc_right_shift exsh;      /* exp plus 1 and frac shifted right module */
+    read_zero_and_shift rzas;      /* when sub operation, count zero and left shit */
 
     instruct do par{
 	/* exp compare and op switch */
@@ -90,9 +92,10 @@ module add_half{
 		}
 	    }
 	    else: par{ /* when sign is not equal, sub */
-		    res_frac = aors.sub(frac_a, shifted_frac_b).result;     /*tmp*/
-		    res_exp = exp_a;                                /*tmp*/  
-		    /* left shift process... */
+		    aors.sub(frac_a, shifted_frac_b);
+		    rzas.do(aors.result, exp_a);
+		    res_exp = rzas.sub_exp;
+		    res_frac = rzas.shifted_frac;
 		}
 	}
 	

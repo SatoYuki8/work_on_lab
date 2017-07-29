@@ -8,6 +8,7 @@ sflread fivebit_comp.sfl
 sflread sub_shift.sfl
 sflread add_or_sub.sfl
 sflread exp_inc_right_shift.sfl
+sflread read_zero_and_shift.sfl
 
 autoinstall add_half
 
@@ -23,4 +24,7 @@ forward +1
 #    以下に生成したスクリプト
 set a 0000010000000010; set b 0000010000000010; forward +1;
 set a 0110100000010100; set b 0110110000010100; forward +1;
-
+set a 1000100000000010; set b 0000010000000010; forward +1;
+set a 1001100000000010; set b 0001010000000010; forward +1;
+set a 1001100000000010; set b 0001110000000010; forward +1;
+set a 1011000001001001; set b 0000110000010010; forward +1;
