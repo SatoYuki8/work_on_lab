@@ -36,15 +36,15 @@ module add_half{
     sel_v res_exp<5>;             /* result exp */
     sel_v res_frac<13>;           /* result frac */
 
-    fivebit_comp comp;             /* comparison module */
+    fivebit_comp comp, comp_last;             /* comparison module */
     sub_shift sub_shift;           /* exp sub and right shift module */
     add_or_sub aors;               /* frac addition or subtraction module */
     exp_inc_right_shift exsh;      /* exp plus 1 and frac shifted right module */
     read_zero_and_shift rzas;      /* when sub operation, count zero and left shit */
 
     instruct do par{
-	/* when exp is 0b00000 and frac 0b00...0 */
 	alt {
+	/* when exp is 0b00000 and frac 0b00...0 */
 	    ((a<14:10> == 0b00000) & (a<9:0> == 0b0000000000)): sum = b;
 	    ((b<14:10> == 0b00000) & (b<9:0> == 0b0000000000)): sum = a;
 	    else: par{
@@ -99,7 +99,12 @@ module add_half{
 		    else: par{ /* when sign is not equal, sub */
 			aors.sub(frac_a, shifted_frac_b);
 			rzas.do(aors.result, exp_a);
-			res_exp = rzas.sub_exp;
+			/* check whether exp become Denomal Num */
+			comp_last.do(rzas.sub_exp, exp_a);
+			alt{
+			    (comp_last.l == 0b1): res_exp = 0b00000;
+			    else: res_exp = rzas.sub_exp;
+			}
 			res_frac = rzas.shifted_frac;
 		    }
 		}
