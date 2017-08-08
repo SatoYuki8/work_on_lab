@@ -44,9 +44,13 @@ module add_half{
 
     instruct do par{
 	alt {
-	/* when exp is 0b00000 and frac 0b00...0 */
+	    /* when exp is 0b00000 and frac 0b00...0 */
+	    /* value is ZERO */
 	    ((a<14:10> == 0b00000) & (a<9:0> == 0b0000000000)): sum = b;
 	    ((b<14:10> == 0b00000) & (b<9:0> == 0b0000000000)): sum = a;
+	    /* when value is Inf, result is Inf */
+	    ((a<14:10> == 0b11111) & (a<9:0> == 0b0000000000)): sum = a;
+	    ((b<14:10> == 0b11111) & (b<9:0> == 0b0000000000)): sum = b;
 	    else: par{
 		/* exp compare and op switch */
 		comp.do(b<14:10>, a<14:10>);
