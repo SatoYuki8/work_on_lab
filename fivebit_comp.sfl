@@ -5,36 +5,21 @@
 
 %i "comp_bit.h"
 
-module fivebit_comp{
+circuit fivebit_comp{
     input a<5>;
     input b<5>;
     output l;
     instrin do;
 
-    comp_bit comp1, comp2, comp3, comp4, comp5;
-
+    sel_v f0, f1, f2, f3;
+    
+    comp_bit comp1, comp2, comp3, comp4;
+    
     instruct do par{
-	alt {
-	    (comp1.do(a<4>, b<4>).l == 0b1): l=0b1;
-	    (comp1.s == 0b1): l=0b0;
-	    (comp1.eq ==0b1): alt {
-		(comp2.do(a<3>, b<3>).l== 0b1): l=0b1;
-		(comp2.s== 0b1): l=0b0;
-		(comp2.eq== 0b1): alt {
-		    (comp3.do(a<2>, b<2>).l== 0b1): l=0b1;
-		    (comp3.s== 0b1): l=0b0;
-		    (comp3.eq== 0b1): alt {
-			(comp4.do(a<1>, b<1>).l== 0b1): l=0b1;
-			(comp4.s== 0b1): l=0b0;
-			(comp4.eq== 0b1): alt {
-			    (comp5.do(a<0>, b<0>).l== 0b1): l=0b1;
-			    (comp5.s== 0b1): l=0b0;
-			    else: l=0b0;
-			}
-		    }
-		}
-	    }
-	}
-
+	f0 = a<0>&^b<0>;
+	f1 = comp1.do(a<1>, b<1>, f0).fout;
+	f2 = comp2.do(a<2>, b<2>, f1).fout;
+	f3 = comp3.do(a<3>, b<3>, f2).fout;
+	l = comp4.do(a<4>, b<4>, f3).fout;
     }
 }

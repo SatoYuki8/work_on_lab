@@ -4,10 +4,9 @@
 
 declare comp_bit{
     input a, b;
-    output l;     /*a > b*/
-    output s;     /*a < b*/
-    output eq;    /*a = b*/
+    input fin;
+    output fout;
     instrin do;
     
-    instr_arg do(a,b);
+    instr_arg do(a,b,fin);
 }
