@@ -5,8 +5,11 @@ circuit exp_inc_right_shift{
     output shifted_frac<13>;
     instrin do;
 
+    sel_v tmp<14>;
+
     instruct do par{
 	inc_exp = exp + 0b00001;
-	shifted_frac = frac >> 0b1;
+	tmp = (0b1 || frac) >> 0b1;
+	shifted_frac = tmp<12:0>;
     }
 }

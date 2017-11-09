@@ -18,6 +18,7 @@
 %i "add_or_sub.h"
 %i "exp_inc_right_shift.h"
 %i "read_zero_and_shift.h"
+%i "round_process.h"
 
 module add_half{
     input a<16>, b<16>;
@@ -31,16 +32,19 @@ module add_half{
     sel_v sticky;                 /* sticky bit */
 
     sel_v shifted_frac_b<13>;
-    sel_v frac_tmp<13>;
+
+    sel_v tmp_exp<5>;
+    sel_v tmp_frac<13>;
 
     sel_v res_exp<5>;             /* result exp */
     sel_v res_frac<13>;           /* result frac */
 
     fivebit_comp comp, comp_last;             /* comparison module */
-    sub_shift sub_shift;           /* exp sub and right shift module */
-    add_or_sub aors;               /* frac addition or subtraction module */
-    exp_inc_right_shift exsh;      /* exp plus 1 and frac shifted right module */
-    read_zero_and_shift rzas;      /* when sub operation, count zero and left shit */
+    sub_shift sub_shift;                      /* exp sub and right shift module */
+    add_or_sub aors;                          /* frac addition or subtraction module */
+    exp_inc_right_shift exsh, round_exsh;     /* exp plus 1 and frac shifted right module */
+    read_zero_and_shift rzas;                 /* when sub operation, count zero and left shit */
+    round_process round;                      /* round processing module */
 
     instruct do par{
 	alt {
@@ -89,14 +93,13 @@ module add_half{
 			aors.add(frac_a, shifted_frac_b);
 			alt{
 			    (aors.cout == 0b1): par{  /* when exist carry */
-				frac_tmp = aors.result;
-				exsh.do(exp_a, frac_tmp);
-				res_exp = exsh.inc_exp;
-				res_frac = exsh.shifted_frac; 
+				exsh.do(exp_a, aors.result);
+				tmp_exp = exsh.inc_exp;
+				tmp_frac = exsh.shifted_frac; 
 			    }		    
 			    else: par{
-				res_frac = aors.result;
-				res_exp = exp_a;
+				tmp_frac = aors.result;
+				tmp_exp = exp_a;
 			    }
 			}
 		    }
@@ -106,16 +109,30 @@ module add_half{
 			/* check whether exp become Denomal Num */
 			comp_last.do(rzas.sub_exp, exp_a);
 			alt{
-			    (comp_last.l == 0b1): res_exp = 0b00000;
-			    else: res_exp = rzas.sub_exp;
+			    (comp_last.l == 0b1): tmp_exp = 0b00000;
+			    else: tmp_exp = rzas.sub_exp;
 			}
-			res_frac = rzas.shifted_frac;
+			tmp_frac = rzas.shifted_frac;
 		    }
 		}
+
+		/* 丸め処理 */
+		round.do(tmp_frac, sticky);
+		alt{
+		    (round.cout == 0b1): par{
+		    round_exsh.do(tmp_exp, round.result);
+			res_exp = round_exsh.inc_exp;
+			res_frac = round_exsh.shifted_frac;
+		    }
+		    else: par{
+			res_exp = tmp_exp;
+			res_frac = round.result;
+		    }
+		}
+
 		sum = sign_a || res_exp || res_frac<11:2>;
 	    }
 	}
-	
     }
 }
 /*End of File.*/
