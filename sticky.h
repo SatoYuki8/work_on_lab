@@ -1,4 +1,4 @@
-declare sticky{
+declare sticky_module{
     input frac<13>;
     input exp<5>;    /* shift amount */
     output result;

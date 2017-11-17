@@ -15,7 +15,7 @@ circuit sub_shift{
 
     sel_v exp_sub<5>;
 
-    sticky sticky_module;
+    sticky_module sticky_module;
 
     instruct do par{
 	exp_sub = exp_a + (^exp_b + 0b00001);

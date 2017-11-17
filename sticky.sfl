@@ -1,4 +1,4 @@
-circuit sticky{
+circuit sticky_module{
     input frac<13>;  
     input exp<5>;  
     output result;
