@@ -1,0 +1,42 @@
+
+/* This is code of Floating-Calcuration generator. */
+/*                                                 */
+/* 2017~ Sato Yuki, Okayama Univercity             */
+/* If there is error, please send error report.    */
+
+
+
+/******************/
+/* if (a > b) l=1 */
+/* else l=0;      */
+/******************/
+
+%i "comp_bit.h"
+module fifteen_comp{
+    input a<15>;
+    input b<15>;
+    output l;
+    instrin do;
+    
+    sel_v f0, f1, f2, f3, f4, f5, f6, f7, f8, f9, f10, f11, f12, f13;
+    comp_bit comp0, comp1, comp2, comp3, comp4, comp5, comp6, comp7, comp8, comp9, comp10, comp11, comp12, comp13;
+    
+    
+    instruct do par {
+	f0 = a<0>&^b<0>;
+	f1 = comp0.do(a<1>, b<1>, f0).fout;
+	f2 = comp1.do(a<2>, b<2>, f1).fout;
+	f3 = comp2.do(a<3>, b<3>, f2).fout;
+	f4 = comp3.do(a<4>, b<4>, f3).fout;
+	f5 = comp4.do(a<5>, b<5>, f4).fout;
+	f6 = comp5.do(a<6>, b<6>, f5).fout;
+	f7 = comp6.do(a<7>, b<7>, f6).fout;
+	f8 = comp7.do(a<8>, b<8>, f7).fout;
+	f9 = comp8.do(a<9>, b<9>, f8).fout;
+	f10 = comp9.do(a<10>, b<10>, f9).fout;
+	f11 = comp10.do(a<11>, b<11>, f10).fout;
+	f12 = comp11.do(a<12>, b<12>, f11).fout;
+	f13 = comp12.do(a<13>, b<13>, f12).fout;
+	l = comp13.do(a<14>, b<14>, f13).fout;
+    }
+}

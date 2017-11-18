@@ -5,6 +5,7 @@
 sflread add_half.sfl
 sflread comp_bit.sfl
 sflread fivebit_comp.sfl
+sflread fifteen_comp.sfl
 sflread sub_shift.sfl
 sflread sticky.sfl
 sflread add_or_sub.sfl

@@ -13,6 +13,7 @@
 **************************************/
 
 %i "comp_bit.h"
+%i "fifteen_comp.h"
 %i "fivebit_comp.h"
 %i "sub_shift.h"
 %i "add_or_sub.h"
@@ -39,7 +40,8 @@ module add_half{
     sel_v res_exp<5>;             /* result exp */
     sel_v res_frac<13>;           /* result frac */
 
-    fivebit_comp comp, comp_last;             /* comparison module */
+    fivebit_comp comp_last;                   /* comparison module */
+    fifteen_comp comp;
     sub_shift sub_shift;                      /* exp sub and right shift module */
     add_or_sub aors;                          /* frac addition or subtraction module */
     exp_inc_right_shift exsh, round_exsh;     /* exp plus 1 and frac shifted right module */
@@ -57,7 +59,7 @@ module add_half{
 	    ((b<14:10> == 0b11111) & (b<9:0> == 0b0000000000)): sum = b;
 	    else: par{
 		/* exp compare and op switch */
-		comp.do(b<14:10>, a<14:10>);
+		comp.do(b<14:0>, a<14:0>);
 		alt {
 		    (comp.l == 0b1): par{    /* (exp_a < exp_b) -> switch */	
 			sign_a = b<15>;
@@ -105,14 +107,14 @@ module add_half{
 		    }
 		    else: par{ /* when sign is not equal, sub */
 			aors.sub(frac_a, shifted_frac_b);
-			rzas.do(aors.result, exp_a);
-			/* check whether exp become Denomal Num */
-			comp_last.do(rzas.sub_exp, exp_a);
-			alt{
-			    (comp_last.l == 0b1): tmp_exp = 0b00000;
-			    else: tmp_exp = rzas.sub_exp;
-			}
-			tmp_frac = rzas.shifted_frac;
+				rzas.do(aors.result, exp_a);
+				/* check whether exp become Denomal Num */
+				comp_last.do(rzas.sub_exp, exp_a);
+				alt{
+				    (comp_last.l == 0b1): tmp_exp = 0b00000;
+				    else: tmp_exp = rzas.sub_exp;
+				}
+				tmp_frac = rzas.shifted_frac;
 		    }
 		}
 

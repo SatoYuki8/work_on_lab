@@ -21,7 +21,10 @@ circuit add_or_sub{
     }
     
     instruct sub par{
-	result = a + (^b + 0b1);
-	cout = 0b0;
+	tmp_a = 0b0 || a;
+	tmp_b = 0b0 || b;
+	tmp_res = tmp_a + (^tmp_b + 0b1);
+	result = tmp_res<12:0>;
+	cout = tmp_res<13>;
     }
 }
