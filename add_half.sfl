@@ -12,129 +12,207 @@
 
 **************************************/
 
-%i "comp_bit.h"
-%i "fifteen_comp.h"
-%i "fivebit_comp.h"
-%i "sub_shift.h"
-%i "add_or_sub.h"
-%i "exp_inc_right_shift.h"
-%i "read_zero_and_shift.h"
-%i "round_process.h"
+/********************* sub modules *****************************/
 
-module add_half{
-    input a<16>, b<16>;
-    output sum<16>;
+/* shifter */
+declare BarrelShift{
+    input a<16>;
+    input amount<5>;
+    output f<16>;
+    instrin do;
+    instr_arg do(a, amount);
+}
+circuit BarrelShift{
+    input a<16>;
+    input amount<5>;
+    output f<16>;
     instrin do;
     
-    sel_v sign_a<1>, sign_b<1>;
-    sel_v exp_a<5>, exp_b<5>;
- /* sel_v frac_a<10>, frac_b<10>; */
-    sel_v frac_a<13>, frac_b<13>;  /* hidden || frac || guard || round  */
-    sel_v sticky;                 /* sticky bit */
-
-    sel_v shifted_frac_b<13>;
-
-    sel_v tmp_exp<5>;
-    sel_v tmp_frac<13>;
-
-    sel_v res_exp<5>;             /* result exp */
-    sel_v res_frac<13>;           /* result frac */
-
-    fivebit_comp comp_last;                   /* comparison module */
-    fifteen_comp comp;
-    sub_shift sub_shift;                      /* exp sub and right shift module */
-    add_or_sub aors;                          /* frac addition or subtraction module */
-    exp_inc_right_shift exsh, round_exsh;     /* exp plus 1 and frac shifted right module */
-    read_zero_and_shift rzas;                 /* when sub operation, count zero and left shit */
-    round_process round;                      /* round processing module */
+    sel t0<16>, t1<16>, t2<16>, t3<16>, t4<16>;
 
     instruct do par{
-	alt {
-	    /* when exp is 0b00000 and frac 0b00...0 */
-	    /* value is ZERO */
-	    ((a<14:10> == 0b00000) & (a<9:0> == 0b0000000000)): sum = b;
-	    ((b<14:10> == 0b00000) & (b<9:0> == 0b0000000000)): sum = a;
-	    /* when value is Inf, result is Inf */
-	    ((a<14:10> == 0b11111) & (a<9:0> == 0b0000000000)): sum = a;
-	    ((b<14:10> == 0b11111) & (b<9:0> == 0b0000000000)): sum = b;
-	    else: par{
-		/* exp compare and op switch */
-		comp.do(b<14:0>, a<14:0>);
-		alt {
-		    (comp.l == 0b1): par{    /* (exp_a < exp_b) -> switch */	
-			sign_a = b<15>;
-			sign_b = a<15>;
-			
-			exp_a = b<14:10>;
-			exp_b = a<14:10>;
-			
-			frac_a = 0b1 || b<9:0> || 0b00;
-			frac_b = 0b1 || a<9:0> || 0b00;
-		    } 
-		    else: par{                        /* (exp_a > exp_b) -> not switch */
-			sign_a = a<15>;
-			sign_b = b<15>;
-			
-			exp_a = a<14:10>;
-			exp_b = b<14:10>;
-			
-			frac_a = 0b1 || a<9:0> || 0b00;
-			frac_b = 0b1 || b<9:0> || 0b00;		
-		    }	    
-		}
-		
-		
-		/* get diff of exp and right shift frac */
-		sub_shift.do(exp_a, exp_b, frac_b);
-		shifted_frac_b = sub_shift.shifted_frac_b;
-		sticky = sub_shift.sticky;   /* sticky bit */
+	alt{
+	    (amount<0>): t0 = a >> 0b1;
+	    else: t0 = a;
+	}
+	alt{
+	    (amount<1>): t1 = t0 >> 0b10;
+	    else: t1 = t0;
+	}
+	alt{
+	    (amount<2>): t2 = t1 >> 0b100;
+	    else: t2 = t1;
+	}
+	alt{
+	    (amount<3>): t3 = t2 >> 0b1000;
+	    else: t3 = t2;
+	}
+	alt{
+	    (amount<4>): t4 = t3 >> 0b10000;
+	    else: t4 = t3;
+	}
 	
-		/* check sign bit and choice add or sub */
-		alt{
-		    (^(sign_a@sign_b) == 0b1): par{ /* when sign A and B are equal, add */
-			aors.add(frac_a, shifted_frac_b);
-			alt{
-			    (aors.cout == 0b1): par{  /* when exist carry */
-				exsh.do(exp_a, aors.result);
-				tmp_exp = exsh.inc_exp;
-				tmp_frac = exsh.shifted_frac; 
-			    }		    
-			    else: par{
-				tmp_frac = aors.result;
-				tmp_exp = exp_a;
-			    }
-			}
-		    }
-		    else: par{ /* when sign is not equal, sub */
-			aors.sub(frac_a, shifted_frac_b);
-				rzas.do(aors.result, exp_a);
-				/* check whether exp become Denomal Num */
-				comp_last.do(rzas.sub_exp, exp_a);
-				alt{
-				    (comp_last.l == 0b1): tmp_exp = 0b00000;
-				    else: tmp_exp = rzas.sub_exp;
-				}
-				tmp_frac = rzas.shifted_frac;
-		    }
-		}
+	f = t4;
+    }
+}
 
-		/* 丸め処理 */
-		round.do(tmp_frac, sticky);
-		alt{
-		    (round.cout == 0b1): par{
-		    round_exsh.do(tmp_exp, round.result);
-			res_exp = round_exsh.inc_exp;
-			res_frac = round_exsh.shifted_frac;
-		    }
-		    else: par{
-			res_exp = tmp_exp;
-			res_frac = round.result;
-		    }
-		}
+/* leading zero shifter */
+declare LeadingZeroShift{
+    input a<16>;
+    output amount<5>;
+    output f<16>;
+    instrin do;
+    instr_arg do(a);
+}
+circuit LeadingZeroShift{
+    input a<16>;
+    output amount<5>;
+    output f<16>;
+    instrin do;
 
-		sum = sign_a || res_exp || res_frac<11:2>;
+    sel t0<16>, t1<16>, t2<16>, t3<16>;
+    sel a1, a2, a3, a4;
+
+    instruct do par{
+	alt{
+	    (a<15:8> == 0b00000000): par{ a4 = 0b1; t0 = a<<0b1000; }
+	    else: par{ a4 = 0b0; t0 = a; }
+	}
+	alt{
+	    (t0<15:12> == 0b0000): par{ a3 = 0b1; t1 = t0<<0b100; }
+	    else: par{ a3 = 0b0; t1 = t0; }
+	}
+	alt{
+	    (t1<15:14> == 0b00): par{ a2 = 0b1; t2 = t1<<0b10; }
+	    else: par{ a2 = 0b0; t2 = t1; }
+	}
+	alt{
+	    (t2<15> == 0b0): par{ a1 = 0b1; t3 = t2<<0b1; }
+	    else: par{ a1 = 0b0; t3 = t2; }
+	}
+
+	amount = (0b0||a4||a3||a2||a1);
+	f = t3;
+    }
+}    
+
+/* mantissa adder */
+declare MantissaAdder{
+    input s1, s2;
+    input x1<16>, x2<16>;
+    output r1<16>;
+    instrin do;
+
+    instr_arg do(s1, s2, x1, x2);
+}
+
+circuit MantissaAdder{
+    input s1, s2;
+    input x1<16>, x2<16>;
+    output r1<16>;
+    instrin do;
+
+    instruct do par{
+	r1 = (16#s1 @ x1) + s1 + (16#s2 @ x2) + s2;
+    }
+}
+
+/************************* main module *******************************/
+circuit add_half{
+    input a<16>, b<16>;
+    output result<16>;
+    instrin do;
+/*    instrout done;       */
+
+    BarrelShift bshift;
+    LeadingZeroShift lzshift;
+    MantissaAdder madd;
+
+    /*start*/
+    sel wdiff<6>;
+
+    sel exp_diff<5>;
+    sel Aa<16>, Bb<16>;
+
+    /*pre-shift for adder operation*/
+    sel xmsb<3>, ymsb<3>;
+
+    sel Bm1<16>, Bm2<16>, Bs1, Bs2, Bexp<5>;    
+
+    /*mantissa addition*/
+/*  sel s1, s2, x1<16>, x2<16>, r1<16>;
+    instrself madd;
+    instr_arg madd(s1, s2, x1, x2);
+    instruct madd r1 = (16#s1 @ x1) + s1 + (16#s2 @ x2) + s1;
+*/    
+    sel m3<16>;
+    
+    sel Cm<16>, Cs, Cexp<5>;    
+
+    /*leading zero shift*/
+    sel z<16>;
+
+    /*return resurt*/
+    
+    /***************************************************************/
+    instruct do par{
+	/*start*/
+	wdiff = (0b0||a<14:10>) + (^(0b0||b<14:10>) + 0b1);
+	alt{
+	    (wdiff<5>): par{
+		exp_diff = ^wdiff<4:0> + 0b1;
+		Aa = b; Bb = a;
+	    }
+	    else: par{
+		exp_diff = wdiff<4:0>;
+		Aa = a; Bb = b;
 	    }
 	}
+
+	/*pre-shift for adder operation*/
+	alt{
+	    (Aa<14:10> == 0b00000): xmsb = 0b000;
+	    else: xmsb = 0b001;
+	}
+
+	alt{
+	    (Bb<14:10> == 0b00000): ymsb = 0b000;
+	    else: ymsb = 0b001;
+	}
+
+	Bm1 = xmsb || Aa<9:0> || 0b000;
+	Bm2 = bshift.do((ymsb || Bb<9:0> || 0b000), exp_diff).f;
+	Bs1 = Aa<15>;
+	Bs2 = Bb<15>;
+	Bexp = Aa<14:10>;
+
+	/*mantissa addition*/
+	m3 = madd.do(Bs1, Bs2, Bm1, Bm2).r1;
+	
+	alt{
+	    (m3<15>): par{
+		Cm = ^m3+0b1;
+		Cs = m3<15>;
+		Cexp = Bexp;
+	    }
+	    else: par{
+		Cm = m3;
+		Cs = m3<15>;
+		Cexp = Bexp;		
+	    }
+	}
+
+	/*leading zero shift*/
+	alt{
+	    (Cm == 0x0000): z = 0x0000;
+	    (Cexp == 0b00000): z = Cs || Cexp || Cm<12:3>;
+	    else: z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) ||
+		      lzshift.do(Cm<14:0>||0b0).f<14:5>;
+	}
+
+	/*return resurt*/
+	result = z;
+	/*done(z);*/
     }
 }
 /*End of File.*/
