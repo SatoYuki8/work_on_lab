@@ -150,6 +150,7 @@ circuit add_half{
     sel Cm<16>, Cs, Cexp<5>;    
 
     /*leading zero shift*/
+    sel round<10>;  /* frac bit width */
     sel z<16>;
 
     /*return resurt*/
@@ -206,8 +207,15 @@ circuit add_half{
 	alt{
 	    (Cm == 0x0000): z = 0x0000;
 	    (Cexp == 0b00000): z = Cs || Cexp || Cm<12:3>;
-	    else: z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) ||
-		      lzshift.do(Cm<14:0>||0b0).f<14:5>;
+	    else: par{
+		lzshift.do(Cm<14:0>||0b0);
+		alt{
+		    (lzshift.f<4>): round = lzshift.f<14:5> + 
+			(lzshift.f<5> | lzshift.f<3> | /|(lzshift.f<2:0>));
+		    else: round = lzshift.f<14:5>;
+		}
+		z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) || round;	    
+	    }
 	}
 
 	/*return resurt*/
