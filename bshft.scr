@@ -1,0 +1,77 @@
+sflread add_half.sfl
+
+autoinstall BarrelShift
+
+rpt_add A "a:%b amount:%b \nf:%b GRS:%b\n\n" a amount f GRS
+
+set do 1
+hold do
+set a 0
+hold a
+set amount 0
+hold amount
+
+forward +1
+set a 1; set amount 0; forward +1
+set a 1; set amount 1; forward +1
+set amount 10; forward +1
+set amount 11; forward +1
+set amount 100; forward +1
+set amount 101; forward +1
+set amount 110; forward +1
+set amount 111; forward +1
+
+set a 10; set amount 0; forward +1
+set a 10; set amount 1; forward +1
+set a 10; set amount 10; forward +1
+set amount 11; forward +1
+set amount 100; forward +1
+set amount 101; forward +1
+set amount 110; forward +1
+set amount 111; forward +1
+set amount 1000; forward +1
+
+set a 11; set amount 0; forward +1
+set amount 1; forward +1
+set amount 10; forward +1
+set amount 11; forward +1
+set amount 101; forward +1
+set amount 110; forward +1
+set amount 111; forward +1
+set amount 1000; forward +1
+
+set a 100; set amount 0; forward +1
+set amount 1; forward +1
+set amount 10; forward +1
+set amount 11; forward +1
+set amount 100; forward +1
+set amount 101; forward +1
+set amount 110; forward +1
+set amount 111; forward +1
+set amount 1000; forward +1
+
+
+
+
+set a 0011010110010001
+set amount 0; forward +1
+set amount 1; forward +1
+set amount 10; forward +1
+set amount 11; forward +1
+set amount 100; forward +1
+set amount 101; forward +1
+set amount 110; forward +1
+set amount 111; forward +1
+set amount 1000; forward +1
+set amount 1001; forward +1
+set amount 1010; forward +1
+set amount 1011; forward +1
+set amount 1100; forward +1
+set amount 1101; forward +1
+set amount 1110; forward +1
+set amount 1111; forward +1
+
+
+
+
+
