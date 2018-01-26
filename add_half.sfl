@@ -19,7 +19,6 @@ declare BarrelShift{
     input a<16>;
     input amount<5>;
     output f<16>;
-    output GRS<3>;
     instrin do;
     instr_arg do(a, amount);
 }
@@ -27,7 +26,6 @@ circuit BarrelShift{
     input a<16>;
     input amount<5>;
     output f<16>;
-    output GRS<3>;   /* Guard, Round, Sticky Bits */
     instrin do;
     
     sel t0<16>, t1<16>, t2<16>, t3<16>, t4<16>;
@@ -37,7 +35,7 @@ circuit BarrelShift{
 	alt{
 	    (amount<0>): par{
 		t0 = a >> 0b1;
-		s0 = a<0>||0b0;
+		s0 = a<3>||0b0;
 	    }
 	    else: par{
 		t0 = a;
@@ -47,7 +45,7 @@ circuit BarrelShift{
 	alt{
 	    (amount<1>): par{
 		t1 = t0 >> 0b10;
-		s1 = t0<1:0>||s0;
+		s1 = t0<4:3>||s0;
 	    }
 	    else: par{
 		t1 = t0;
@@ -57,7 +55,7 @@ circuit BarrelShift{
 	alt{
 	    (amount<2>): par{
 		t2 = t1 >> 0b100;
-		s2 = t1<3:0>||s1;
+		s2 = t1<6:3>||s1;
 	    }
 	    else: par{
 		t2 = t1;
@@ -67,69 +65,64 @@ circuit BarrelShift{
 	alt{
 	    (amount<3>): par{
 		t3 = t2 >> 0b1000;
-		s3 = t2<7:0>||s2;
+		s3 = t2<10:3>||s2;
 	    }
 	    else: par{
 		t3 = t2;
-		s3 = s2||0b00000000;
+		s3 = (s2||0b00000000);
 	    }
 	}
 	alt{
 	    (amount<4>): par{
 		t4 = t3 >> 0b10000;
-		s4 = t3<15:0>||s3;
+		s4 = t3<18:3>||s3;
 	    }
 	    else: par{
 		t4 = t3;
-		s4 = s3||0b0000000000000000;
+		s4 = (s3||0b0000000000000000);
 	    }
 	}
 	
-	f = t4;
-	GRS =  s4<31> || s4<30> || /|(s4<29:0>);
+	f = t4<15:1>|| /|(s4<29:0>);
     }
 }
 
 /* leading zero shifter */
 declare LeadingZeroShift{
-    input a<19>;
+    input a<16>;
     output amount<5>;
-    output f<19>;
+    output f<16>;
     instrin do;
     instr_arg do(a);
 }
 circuit LeadingZeroShift{
-    input a<19>;
+    input a<16>;
     output amount<5>;
-    output f<19>;
+    output f<16>;
     instrin do;
 
-    sel t<19>, t0<19>, t1<19>, t2<19>, t3<19>;
-    sel a0, a1, a2, a3, a4;
+    sel t0<16>, t1<16>, t2<16>, t3<16>;
+    sel a0, a1, a2, a3;
 
     instruct do par{
 	alt{
-	    (a<18:3> == 0b0000000000000000): par{ a4 = 0b1; t = a<<0b1000; }
-	    else: par{ a4 = 0b0; t = a; }
+	    (a<15:8> == 0b00000000): par{ a3 = 0b1; t0 = a<<0b1000; }
+	    else: par{ a3 = 0b0; t0 = a; }
 	}
 	alt{
-	    (t<18:11> == 0b00000000): par{ a3 = 0b1; t0 = t<<0b1000; }
-	    else: par{ a3 = 0b0; t0 = t; }
-	}
-	alt{
-	    (t0<18:15> == 0b0000): par{ a2 = 0b1; t1 = t0<<0b100; }
+	    (t0<15:12> == 0b0000): par{ a2 = 0b1; t1 = t0<<0b100; }
 	    else: par{ a2 = 0b0; t1 = t0; }
 	}
 	alt{
-	    (t1<18:17> == 0b00): par{ a1 = 0b1; t2 = t1<<0b10; }
+	    (t1<15:14> == 0b00): par{ a1 = 0b1; t2 = t1<<0b10; }
 	    else: par{ a1 = 0b0; t2 = t1; }
 	}
 	alt{
-	    (t2<18> == 0b0): par{ a0 = 0b1; t3 = t2<<0b1; }
+	    (t2<15> == 0b0): par{ a0 = 0b1; t3 = t2<<0b1; }
 	    else: par{ a0 = 0b0; t3 = t2; }
 	}
 
-	amount = a4||a3||a2||a1||a0;
+	amount = 0b0||a3||a2||a1||a0;
 	f = t3;
     }
 }    
@@ -138,28 +131,21 @@ circuit LeadingZeroShift{
 declare MantissaAdder{
     input s1, s2;
     input x1<16>, x2<16>;
-    input GRS<3>;
     output r1<16>;
-    output grs_out<3>;
     instrin do;
 
-    instr_arg do(s1, s2, x1, x2, GRS);
+    instr_arg do(s1, s2, x1, x2);
 }
 
 circuit MantissaAdder{
     input s1, s2;
     input x1<16>, x2<16>;
-    input GRS<3>;
     output r1<16>;
-    output grs_out<3>;
     instrin do;
 
-    sel tmp<19>;
     
     instruct do par{
-	tmp = (19#s1 @ (x1||0b000)) + s1 + (19#s2 @ (x2||GRS)) + s2;
-	r1 = tmp<18:3>;
-	grs_out = tmp<2:0>;
+	r1 = ((16#s1 @ x1) + s1) + ((16#s2 @ x2) + s2);
     }
 }
 
@@ -184,14 +170,12 @@ circuit add_half{
     sel xmsb<3>, ymsb<3>;
 
     sel Bm1<16>, Bm2<16>, Bs1, Bs2, Bexp<5>;
-    sel Bgrs<3>;  /* Guard, Round, Sticky Bits */
 
     /*mantissa addition*/
     sel m3<16>;    /* Extension GRS bits */
     
     sel Cm<16>;
     sel Cs, Cexp<5>;    
-    sel Cgrs<3>;
 
     /*leading zero shift*/
     sel round<10>;  /* frac bit width */
@@ -230,37 +214,32 @@ circuit add_half{
 	Bs1 = Aa<15>;
 	Bs2 = Bb<15>;
 	Bexp = Aa<14:10>;
-	Bgrs = bshift.GRS;
 
 	/*mantissa addition*/
-	m3 = madd.do(Bs1, Bs2, Bm1, Bm2, Bgrs).r1;
+	m3 = madd.do(Bs1, Bs2, Bm1, Bm2).r1;
 	
 	alt{
 	    (m3<15>): par{
 		Cm = ^m3+0b1;
 		Cs = m3<15>;
 		Cexp = Bexp;
-		Cgrs = madd.grs_out;
 	    }
 	    else: par{
 		Cm = m3;
 		Cs = m3<15>;
 		Cexp = Bexp;		
-		Cgrs = madd.grs_out;
 	    }
 	}
 
 	/*leading zero shift and round*/
 	alt{
 	    (Cm == 0b0000000000000000): z = 0b0000000000000000;
-	    (Cexp == 0b00000): z = Cs || Cexp || Cm<12:3>;
+	    (Cexp == 0b00000): par{		
+		z = Cs || Cexp || Cm<9:0>;		
+	    }
 	    else: par{
-		lzshift.do(Cm<14:0> || Cgrs || 0b0);
-		alt{
-		    (lzshift.f<7>): round = lzshift.f<17:8> + 
-			(lzshift.f<8> | lzshift.f<6> | /|(lzshift.f<5:0>));
-		    else: round = lzshift.f<17:8>;
-		}
+		lzshift.do(Cm<14:0> || 0b0);
+		round = lzshift.f<14:5> + (lzshift.f<4>&(lzshift.f<5>|lzshift.f<3>|lzshift.f<2>));		
 		z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) || round;
 	    }
 	}

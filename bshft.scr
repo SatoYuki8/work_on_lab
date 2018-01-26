@@ -2,7 +2,7 @@ sflread add_half.sfl
 
 autoinstall BarrelShift
 
-rpt_add A "a:%b amount:%b \nf:%b GRS:%b\n\n" a amount f GRS
+rpt_add A "a:%b amount:%b \nf:%b \n\n" a amount f
 
 set do 1
 hold do
@@ -71,7 +71,20 @@ set amount 1101; forward +1
 set amount 1110; forward +1
 set amount 1111; forward +1
 
+set a 0010010100001000
+set amount 110; forward +1
+
+set a 0101110010100001
+set amount 110; forward +1
+set a 0010010100001000
+set amount 110; forward +1
 
 
+set a 1000000010000000
+set amount 1010
+forward +1
 
+set a 0010000010101000
+set amount 1
+forward +1
 
