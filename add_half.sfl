@@ -149,6 +149,41 @@ circuit MantissaAdder{
     }
 }
 
+/* Increase Frac bit */
+declare IncreaseFrac{
+    input cin;
+    input in<10>;
+    output out<10>;
+    output p;
+    instrin do;
+
+    instr_arg do(cin, in);
+}
+
+module IncreaseFrac{
+    input cin;
+    input in<10>;
+    output out<10>;
+    output p;
+    sel cry<10>;
+    instrin do;
+
+    instruct do par{
+	p = /&(in);
+	cry =  (/&(in<8:0>) & cin)
+	    || (/&(in<7:0>) & cin)
+	    || (/&(in<6:0>) & cin)
+	    || (/&(in<5:0>) & cin)
+	    || (/&(in<4:0>) & cin)
+	    || (/&(in<3:0>) & cin)
+	    || (/&(in<2:0>) & cin)
+	    || (/&(in<1:0>) & cin)
+	    || (in<0> & cin)
+	    || cin;
+	out = in @ cry;
+    }
+}
+
 /************************* main module *******************************/
 circuit add_half{
     input a<16>, b<16>;
@@ -159,6 +194,7 @@ circuit add_half{
     BarrelShift bshift;
     LeadingZeroShift lzshift;
     MantissaAdder madd;
+    IncreaseFrac incfrac;
 
     /*start*/
     sel wdiff<6>;
@@ -178,7 +214,7 @@ circuit add_half{
     sel Cs, Cexp<5>;    
 
     /*leading zero shift*/
-    sel round<10>;  /* frac bit width */
+    sel round;     /* If it needs round process, this bit is 1. */
     sel z<16>;
 
     /*return resurt*/
@@ -239,8 +275,15 @@ circuit add_half{
 	    }
 	    else: par{
 		lzshift.do(Cm<14:0> || 0b0);
-		round = lzshift.f<14:5> + (lzshift.f<4>&(lzshift.f<5>|lzshift.f<3>|lzshift.f<2>));		
-		z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) || round;
+		round = lzshift.f<4>&(lzshift.f<5>|lzshift.f<3>| (/|lzshift.f<2:0>));     
+
+		alt{
+		    (round): par{
+			incfrac.do(0b1, lzshift.f<14:5>);
+			z = Cs || (((Cexp + ^(lzshift.amount) + 0b1) + 0b1) + incfrac.p) || incfrac.out;
+		    }
+		    else: z = Cs || ((Cexp + ^(lzshift.amount) + 0b1) + 0b1) || lzshift.f<14:5>;
+		}
 	    }
 	}
 

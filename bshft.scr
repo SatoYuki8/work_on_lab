@@ -88,3 +88,6 @@ set a 0010000010101000
 set amount 1
 forward +1
 
+set a 0010001001011000
+set amount 110
+forward +1
