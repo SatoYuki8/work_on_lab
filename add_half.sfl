@@ -22,7 +22,7 @@ declare BarrelShift{
     instrin do;
     instr_arg do(a, amount);
 }
-circuit BarrelShift{
+module BarrelShift{
     input a<16>;
     input amount<5>;
     output f<16>;
@@ -95,7 +95,7 @@ declare LeadingZeroShift{
     instrin do;
     instr_arg do(a);
 }
-circuit LeadingZeroShift{
+module LeadingZeroShift{
     input a<16>;
     output amount<5>;
     output f<16>;
