@@ -271,7 +271,7 @@ circuit add_half{
 	alt{
 	    (Cm == 0b0000000000000000): z = 0b0000000000000000;
 	    (Cexp == 0b00000): par{		
-		z = Cs || Cexp || Cm<9:0>;		
+		z = Cs || Cexp || Cm<12:3>;		
 	    }
 	    else: par{
 		lzshift.do(Cm<14:0> || 0b0);
